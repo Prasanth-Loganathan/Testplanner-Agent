@@ -16,6 +16,7 @@ Use it on its own for plans you already have:
 """
 
 import csv
+import io
 import sys
 from pathlib import Path
 
@@ -75,6 +76,13 @@ def _even_columns(table: list[list[str]]) -> list[list[str]]:
     return [(row + [""] * width)[:width] for row in table]
 
 
+def rows_to_csv_text(rows: list[list[str]], delimiter: str | None = None) -> str:
+    """Turn rows into CSV text (used by the web app's download button)."""
+    buffer = io.StringIO()
+    csv.writer(buffer, delimiter=delimiter or config.CSV_DELIMITER).writerows(rows)
+    return buffer.getvalue()
+
+
 def export_csv(md_path: Path, csv_path: Path | None = None) -> Path | None:
     """Write the test cases of `md_path` to CSV. Returns the CSV path, or None if no table."""
     rows = get_test_cases(md_path.read_text(encoding="utf-8"))
@@ -82,8 +90,7 @@ def export_csv(md_path: Path, csv_path: Path | None = None) -> Path | None:
         return None
     csv_path = csv_path or md_path.with_suffix(".csv")
     # utf-8-sig adds a BOM so Excel shows umlauts and other characters correctly.
-    with csv_path.open("w", newline="", encoding="utf-8-sig") as f:
-        csv.writer(f, delimiter=config.CSV_DELIMITER).writerows(rows)
+    csv_path.write_text(rows_to_csv_text(rows), encoding="utf-8-sig", newline="")
     return csv_path
 
 

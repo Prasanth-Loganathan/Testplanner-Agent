@@ -8,20 +8,23 @@ and see how an agent works: the LLM decides which tool to call, Python runs the
 tool, and the result goes back to the LLM until it writes the plan.
 
 ```
-you ──url──▶ main.py ──▶ agent.py (loop) ◀──▶ LLM (Groq / Ollama)
-                              │
-                              ▼
-                          tools.py  ──▶ website (requests + BeautifulSoup)
-                              │
-                              ▼
-                 output/test_plan_<site>.md
+you ──url──▶ app.py (web UI) ─┐
+             main.py (CLI) ───┴─▶ agent.py (loop) ◀──▶ LLM (Groq / Ollama)
+                                       │
+                                       ▼
+                                   tools.py  ──▶ website (requests + BeautifulSoup)
+                                       │
+                                       ▼
+                    output/test_plan_<site>.md  +  .csv (export_csv.py)
 ```
 
 ## Files
 
 | File | What it does | Good first change |
 |------|--------------|-------------------|
+| `app.py` | Web UI (Streamlit): enter a URL, watch the steps, download CSV / Markdown | Add a "Run again" button |
 | `main.py` | Command line: reads the URL, runs the agent, saves the plan | Add a `--pages` option |
+| `export_csv.py` | Turns the test-case table into CSV | Map columns for a Jira/Xray import |
 | `agent.py` | The agent loop: LLM → tool → LLM → … → answer | Print token usage per step |
 | `tools.py` | What the agent can do: analyze a page, list links | Add a new tool |
 | `prompts.py` | The instructions and the test plan template | Change the output format |
@@ -43,7 +46,22 @@ you ──url──▶ main.py ──▶ agent.py (loop) ◀──▶ LLM (Groq 
 4. Copy `.env.example` to `.env` and paste your Groq API key into `LLM_API_KEY`.
    Get a free key at https://console.groq.com/keys
 
-## Run it
+## Run the web app
+
+```powershell
+streamlit run app.py
+```
+
+Your browser opens at http://localhost:8501. Enter a website and click
+**Generate plan**. You'll see each agent step live, then the test cases as a
+filterable table, the full plan, and buttons to **download CSV** or Markdown.
+**Preview page** shows what the agent sees on the first page, without calling
+the LLM. Stop the app with **Ctrl+C** in the terminal.
+
+Tip: Streamlit re-runs `app.py` from top to bottom on every click. That's why the
+result is kept in `st.session_state`. Read the comments in `app.py` to see how.
+
+## Run it from the command line
 
 ```powershell
 # 1. See what the agent "sees" on a page. No LLM call and no key needed.

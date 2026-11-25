@@ -11,6 +11,7 @@ Set a breakpoint inside run_agent() in VS Code to watch it happen.
 """
 
 import json
+from typing import Callable
 
 from openai import OpenAI
 
@@ -43,8 +44,21 @@ def call_tool(name: str, raw_arguments: str) -> str:
         return json.dumps({"error": f"Bad arguments for {name}: {exc}"})
 
 
-def run_agent(url: str, verbose: bool = True) -> str:
-    """Run the agent on one website and return the Markdown test plan."""
+def run_agent(url: str, verbose: bool = True,
+              on_step: Callable[[str], None] | None = None) -> str:
+    """
+    Run the agent on one website and return the Markdown test plan.
+
+    on_step: optional function called with a short message at every step.
+             The web UI (app.py) uses it to show progress live; the
+             command line just prints.
+    """
+    def log(text: str) -> None:
+        if verbose:
+            print(f"  {text}")
+        if on_step:
+            on_step(text)
+
     client = make_client()
     reset_visited()
 
@@ -66,6 +80,7 @@ def run_agent(url: str, verbose: bool = True) -> str:
 
         # No tool calls -> the LLM has written its final answer.
         if not message.tool_calls:
+            log(f"step {step}: writing the test plan")
             return message.content or ""
 
         # Keep the assistant's tool request in the history (the API requires it).
@@ -84,14 +99,12 @@ def run_agent(url: str, verbose: bool = True) -> str:
 
         # Run each requested tool and send its result back.
         for call in message.tool_calls:
-            if verbose:
-                print(f"  step {step}: {call.function.name}({call.function.arguments})")
+            log(f"step {step}: {call.function.name}({call.function.arguments})")
             result = call_tool(call.function.name, call.function.arguments)
             messages.append({"role": "tool", "tool_call_id": call.id, "content": result})
 
     # Out of steps: ask for the final answer without tools.
-    if verbose:
-        print("  step limit reached, asking for the final test plan")
+    log("step limit reached, asking for the final test plan")
     messages.append({"role": "user", "content": prompts.FINISH_NOW_PROMPT})
     response = client.chat.completions.create(
         model=config.LLM_MODEL,

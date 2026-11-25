@@ -42,7 +42,8 @@ Use the page data (for example images missing alt text, HTTPS) as evidence.
 ## 5. Risks and assumptions
 """
 
-USER_PROMPT = "Create a test plan for this website: https://www.saucedemo.com/"
+# {url} is replaced with the website you enter (see agent.py). Keep the placeholder.
+USER_PROMPT = "Create a test plan for this website: {url}"
 
 # Used if the agent runs out of steps before finishing: forces a final answer.
 FINISH_NOW_PROMPT = (

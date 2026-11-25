@@ -23,8 +23,8 @@ LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.2"))
 # --- Agent limits ---------------------------------------------------------
 # MAX_STEPS: how many think -> act rounds the agent may take before it must answer.
 # MAX_PAGES: how many pages of the website the agent may open in total.
-MAX_STEPS = int(os.getenv("MAX_STEPS", "8"))
-MAX_PAGES = int(os.getenv("MAX_PAGES", "4"))
+MAX_STEPS = int(os.getenv("MAX_STEPS", "3"))
+MAX_PAGES = int(os.getenv("MAX_PAGES", "2"))
 
 # --- Web fetching ---------------------------------------------------------
 REQUEST_TIMEOUT = int(os.getenv("REQUEST_TIMEOUT", "15"))
